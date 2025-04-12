@@ -1,5 +1,4 @@
 using APIAuthentication.Controllers;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
@@ -27,19 +26,6 @@ builder.Services.AddAuthentication("Bearer")
             NameClaimType = ClaimTypes.Name, // To Validate based on Name
             IssuerSigningKey = new SymmetricSecurityKey(
                Encoding.UTF8.GetBytes(Secrete)) // MUST MATCH!
-        };
-
-        options.Events = new JwtBearerEvents
-        {
-            OnMessageReceived = context =>
-            {
-                var token = context.Request.Cookies["token"];
-                if (!string.IsNullOrEmpty(token))
-                {
-                    context.Token = token;
-                }
-                return Task.CompletedTask;
-            },
         };
     });
 
