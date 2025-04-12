@@ -3,37 +3,49 @@
 }
 
 <div class="text-center">
-   <h1>This is API Authentication and Authorization</h1>    
-   <button id="Login">Login</button>
-   <button id="securedata">Secure Data</button>
-   <button id="admin">Get Admin</button>
+   <h1>This is API Authentication and Authorization</h1> 
+   <div style="padding-bottom:10px">
+       UserName : <input type="text" id="txtuserName" placeholder="Enter User Name" width="100px" /> <br />
+        Passowrd : <input type="password" id="txtpassword" placeholder="Enter Password" width="100px" /> <br />
+   </div>
+
+   <div style="margin-top:10px">
+        <button id="Login">Login</button>
+        <button id="securedata">Secure Data</button>
+        <button id="admin">Get Admin</button>
+   </div>
+
+   
 
 </div>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    $(document).ready(function () {
+    $(document).ready(function () {   
+        localStorage.setItem('token','');
         $("#Login").click(function () {
+            debugger;
+            let userName  =  $("#txtuserName").val();
+            let password  = $("#txtpassword").val();
+            let secreteKey  = userName + password + userName + password ;
             $.ajax({
                 url: '/api/Auth/Login',
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ username: 'admin', password: 'admin' }),
+                data: JSON.stringify({ username:userName, password: password, secreteKey: secreteKey }),
                 success: function (data) {
                     alert('Login successful! Token: ' + data.token);
                     localStorage.setItem('token', data.token);
                 },
                 error: function (xhr, status, error) {
-                    alert('Login failed: ' + xhr.responseText);
+                    alert('Login failed: ' + xhr.responseText);                   
+                    localStorage.setItem('token','');
+
                 }
             });
         });
         $("#securedata").click(function () {
             debugger;           
-              var token = document.cookie
-                                .split("; ")
-                                .find(row => row.startsWith("token="))
-                                ?.split("=")[1];
-            
+            var token  = localStorage.getItem("token");            
             $.ajax({
                 url: '/api/SecureData/GetSecureData',
                 type: 'GET',
@@ -43,16 +55,13 @@
                 },
                 error: function (xhr, status, error) {
                     alert('Error fetching secure data: ' + xhr.responseText);
+                    
                 }
             });
         });
         $("#admin").click(function () {
-             debugger;
-           // var token = localStorage.getItem('token');
-            var token = document.cookie
-                                .split("; ")
-                                .find(row => row.startsWith("token="))
-                                ?.split("=")[1];
+           debugger;
+           var token = localStorage.getItem('token');            
             $.ajax({
                 url: '/api/SecureData/Admin',
                 type: 'GET',
@@ -66,4 +75,5 @@
             });
         });
     });
+     
 </script>

@@ -11,9 +11,9 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddAuthorization();
 
 //builder.Services.AddAuthentication();
+
 // Get Secrete from appsettings.json and save to string
 string? Secrete = builder.Configuration.GetSection("Secrete").Value;
-
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {
@@ -58,7 +58,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-app.UseMiddleware<CustomAuthMiddleware>();
+app.UseMiddleware<APIValidationMiddleWare>();
 app.UseAuthentication();
 app.UseAuthorization();
 

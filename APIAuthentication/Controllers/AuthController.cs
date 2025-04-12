@@ -9,8 +9,7 @@ namespace APIAuthentication.Controllers
         [HttpPost("Login")]
         public IActionResult Login([FromBody] UserModel user)
         {
-            // Validate the user credentials (this is just a placeholder, implement your own logic)
-            if (user.UserName == "admin" && user.Password == "admin")
+            if (user.UserName == "virendranikam" && user.Password == "virendranikam")
             {
                 var token = JwtUtils.GenerateJwtToken(user);
                 return Ok(new { Token = token });
