@@ -9,13 +9,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddAuthorization();
 
-//builder.Services.AddAuthentication();
+// Add Default Authentication 
+builder.Services.AddAuthentication();
 
-// Get Secrete from appsettings.json and save to string
-string? Secrete = builder.Configuration.GetSection("Secrete").Value;
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {
+        string? secrete = builder.Configuration.GetSection("Secrete").Value;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = false,
@@ -25,7 +25,7 @@ builder.Services.AddAuthentication("Bearer")
             RoleClaimType = ClaimTypes.Role, // To validate based on User Role
             NameClaimType = ClaimTypes.Name, // To Validate based on Name
             IssuerSigningKey = new SymmetricSecurityKey(
-               Encoding.UTF8.GetBytes(Secrete)) // MUST MATCH!
+               Encoding.UTF8.GetBytes(secrete))
         };
     });
 
@@ -44,7 +44,10 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-app.UseMiddleware<APIValidationMiddleWare>();
+app.UseWhen(context => context.Request.Path.StartsWithSegments("/api"), appBuilder =>
+{
+    appBuilder.UseMiddleware<APIValidationMiddleWare>();
+});
 app.UseAuthentication();
 app.UseAuthorization();
 

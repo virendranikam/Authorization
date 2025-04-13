@@ -31,7 +31,7 @@
                 url: '/api/Auth/Login',
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ username:userName, password: password, secreteKey: secreteKey }),
+                data: JSON.stringify({ username:userName, password: password }),
                 success: function (data) {
                     alert('Login successful! Token: ' + data.token);
                     localStorage.setItem('token', data.token);

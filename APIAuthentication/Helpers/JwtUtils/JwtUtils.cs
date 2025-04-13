@@ -24,6 +24,7 @@ namespace APIAuthentication.Helpers.JwtUtils
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
+
     }
 
     public class UserModel
