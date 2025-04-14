@@ -18,72 +18,69 @@ namespace APIAuthentication.Controllers
 
         public Task Invoke(HttpContext httpContext)
         {
-            List<string> enableRoutes = new List<string>()
-                            {
-                                "/api/SecureData/GetSecureData",
-                                "/api/SecureData/Admin",
+            List<string> excludeAPIRoutes =
+                            [
                                 "/api/Auth/Login"
-                            };
-            if (enableRoutes.Contains(httpContext.Request.Path.ToString()))
+                            ];
+
+            if (excludeAPIRoutes.Contains(httpContext.Request.Path.ToString()))
             {
-                if (httpContext.Request.Path.ToString().ToLower().Contains("login"))
+                return _next(httpContext);
+            }
+            else
+            {
+                var token = httpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+                if (string.IsNullOrEmpty(token))
                 {
-                    return _next(httpContext);
+                    httpContext.Response.StatusCode = 401;
+                    return httpContext.Response.WriteAsync("Token is missing");
                 }
                 else
                 {
-                    var token = httpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-                    if (string.IsNullOrEmpty(token))
+                    string? secrete = _configuration.GetSection("Secrete").Value;
+                    var tokenHandler = new JwtSecurityTokenHandler();
+                    var tokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
+                        ValidateLifetime = false,
+                        ValidateIssuerSigningKey = false,
+                        RoleClaimType = ClaimTypes.Role, // To validate based on User Role
+                        NameClaimType = ClaimTypes.Name, // To Validate based on Name
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                                    Encoding.UTF8.GetBytes(secrete))
+                    };
+                    try
+                    {
+                        tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
+                        if (validatedToken == null)
+                        {
+                            httpContext.Response.StatusCode = 401;
+                            return httpContext.Response.WriteAsync("Token is not valid");
+                        }
+                        else
+                        {
+                            return _next(httpContext);
+                        }
+                    }
+                    catch (SecurityTokenExpiredException)
                     {
                         httpContext.Response.StatusCode = 401;
-                        return httpContext.Response.WriteAsync("Token is missing");
+                        return httpContext.Response.WriteAsync("Token is expired");
                     }
-                    else
+                    catch (SecurityTokenInvalidSignatureException)
                     {
-                        string? secrete = _configuration.GetSection("Secrete").Value;
-                        var tokenHandler = new JwtSecurityTokenHandler();
-                        var tokenValidationParameters = new TokenValidationParameters
-                        {
-                            ValidateIssuer = false,
-                            ValidateAudience = false,
-                            ValidateLifetime = false,
-                            ValidateIssuerSigningKey = false,
-                            RoleClaimType = ClaimTypes.Role, // To validate based on User Role
-                            NameClaimType = ClaimTypes.Name, // To Validate based on Name
-                            IssuerSigningKey = new SymmetricSecurityKey(
-                                     Encoding.UTF8.GetBytes(secrete))
-                        };
-                        try
-                        {
-                            tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
-                            if (validatedToken == null)
-                            {
-                                httpContext.Response.StatusCode = 401;
-                                return httpContext.Response.WriteAsync("Token is not valid");
-                            }
-                            else
-                            {
-                                return _next(httpContext);
-                            }
-                        }
-                        catch (SecurityTokenExpiredException)
-                        {
-                            httpContext.Response.StatusCode = 401;
-                            return httpContext.Response.WriteAsync("Token is expired");
-                        }
-                        catch (SecurityTokenInvalidSignatureException)
-                        {
-                            httpContext.Response.StatusCode = 401;
-                            return httpContext.Response.WriteAsync("Invalid token signature");
-                        }
-                        catch (Exception ex)
-                        {
-                            httpContext.Response.StatusCode = 401;
-                            return httpContext.Response.WriteAsync("Invalid token");
-                        }
+                        httpContext.Response.StatusCode = 401;
+                        return httpContext.Response.WriteAsync("Invalid token signature");
+                    }
+                    catch (Exception ex)
+                    {
+                        httpContext.Response.StatusCode = 401;
+                        return httpContext.Response.WriteAsync("Invalid token");
                     }
                 }
             }
+
             return _next(httpContext);
         }
     }
