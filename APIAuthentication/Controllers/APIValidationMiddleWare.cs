@@ -24,8 +24,6 @@ namespace APIAuthentication.Controllers
                                 "/api/SecureData/Admin",
                                 "/api/Auth/Login"
                             };
-            // Check if httpContext contains any routes 
-            // If it does not contain any routes, then return 401
             if (enableRoutes.Contains(httpContext.Request.Path.ToString()))
             {
                 if (httpContext.Request.Path.ToString().ToLower().Contains("login"))
@@ -34,7 +32,6 @@ namespace APIAuthentication.Controllers
                 }
                 else
                 {
-                    // Extract token from httpContext 
                     var token = httpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
                     if (string.IsNullOrEmpty(token))
                     {
@@ -43,12 +40,8 @@ namespace APIAuthentication.Controllers
                     }
                     else
                     {
-                        // Get secrete  
                         string? secrete = _configuration.GetSection("Secrete").Value;
-                        // Validate token here 
                         var tokenHandler = new JwtSecurityTokenHandler();
-
-                        // Define TokenValidation Parameters  
                         var tokenValidationParameters = new TokenValidationParameters
                         {
                             ValidateIssuer = false,
@@ -60,10 +53,18 @@ namespace APIAuthentication.Controllers
                             IssuerSigningKey = new SymmetricSecurityKey(
                                      Encoding.UTF8.GetBytes(secrete))
                         };
-                        // validate token against TokenValidationParameters
                         try
                         {
                             tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
+                            if (validatedToken == null)
+                            {
+                                httpContext.Response.StatusCode = 401;
+                                return httpContext.Response.WriteAsync("Token is not valid");
+                            }
+                            else
+                            {
+                                return _next(httpContext);
+                            }
                         }
                         catch (SecurityTokenExpiredException)
                         {
